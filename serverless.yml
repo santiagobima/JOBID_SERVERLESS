@@ -1,0 +1,31 @@
+service: triggerjobid-service
+
+provider:
+  name: aws
+  runtime: python3.11
+  stage: dev
+  region: eu-west-1
+  environment:
+    DATA_BUCKET: tag-dl-sandbox-data
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "s3:GetObject"
+          Resource:
+            - "arn:aws:s3:::tag-dl-sandbox-data/*"
+
+functions:
+  triggerjobid:
+    handler: main.main
+    events:
+      - s3:
+          bucket: tag-dl-sandbox-data
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - prefix: intake/transition/job_id_services/TAG_JOB_ID/
+            - suffix: .json
+
+

@@ -1,0 +1,5 @@
+data_bucket: tag-dl-sandbox-data
+code_bucket: tag-dl-sandbox-code
+
+secret_name: dev/BizawayToken
+secret_arn: arn:aws:secretsmanager:eu-west-1:373024328391:secret:dev/BizawayToken-3dEziw

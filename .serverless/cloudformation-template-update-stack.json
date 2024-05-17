@@ -2,79 +2,11 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "The AWS CloudFormation template for this Serverless application",
   "Resources": {
-    "ServerlessDeploymentBucket": {
-      "Type": "AWS::S3::Bucket",
-      "Properties": {
-        "BucketEncryption": {
-          "ServerSideEncryptionConfiguration": [
-            {
-              "ServerSideEncryptionByDefault": {
-                "SSEAlgorithm": "AES256"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "ServerlessDeploymentBucketPolicy": {
-      "Type": "AWS::S3::BucketPolicy",
-      "Properties": {
-        "Bucket": {
-          "Ref": "ServerlessDeploymentBucket"
-        },
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "s3:*",
-              "Effect": "Deny",
-              "Principal": "*",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition"
-                      },
-                      ":s3:::",
-                      {
-                        "Ref": "ServerlessDeploymentBucket"
-                      },
-                      "/*"
-                    ]
-                  ]
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition"
-                      },
-                      ":s3:::",
-                      {
-                        "Ref": "ServerlessDeploymentBucket"
-                      }
-                    ]
-                  ]
-                }
-              ],
-              "Condition": {
-                "Bool": {
-                  "aws:SecureTransport": false
-                }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "TriggerjobidLogGroup": {
+    "BizawayJobIdPropagationLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/triggerjobid-service-dev-triggerjobid"
+        "LogGroupName": "/aws/lambda/bizaway-jobid-propagation-dev-BizawayJobIdPropagation",
+        "RetentionInDays": 60
       }
     },
     "IamRoleLambdaExecution": {
@@ -102,7 +34,7 @@
               "Fn::Join": [
                 "-",
                 [
-                  "triggerjobid-service",
+                  "bizaway-jobid-propagation",
                   "dev",
                   "lambda"
                 ]
@@ -120,7 +52,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/triggerjobid-service-dev*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/bizaway-jobid-propagation-dev*:*"
                     }
                   ]
                 },
@@ -131,7 +63,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/triggerjobid-service-dev*:*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/bizaway-jobid-propagation-dev*:*:*"
                     }
                   ]
                 },
@@ -140,7 +72,15 @@
                   "Action": [
                     "s3:GetObject"
                   ],
-                  "Resource": "arn:aws:s3:::tag-dl-sandbox-data/*"
+                  "Resource": "arn:aws:s3:::tag-dl-sandbox-data/intake/transition/job_id_services/TAG_JOB_ID/*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "secretmanager:GetSecretValue",
+                    "secretsmanager:DescribeSecret"
+                  ],
+                  "Resource": "arn:aws:secretsmanager:eu-west-1:373024328391:secret:dev/BizawayToken-3dEziw"
                 }
               ]
             }
@@ -151,7 +91,7 @@
           "Fn::Join": [
             "-",
             [
-              "triggerjobid-service",
+              "bizaway-jobid-propagation",
               "dev",
               {
                 "Ref": "AWS::Region"
@@ -162,23 +102,22 @@
         }
       }
     },
-    "TriggerjobidLambdaFunction": {
+    "BizawayJobIdPropagationLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
-          "S3Bucket": {
-            "Ref": "ServerlessDeploymentBucket"
-          },
-          "S3Key": "serverless/triggerjobid-service/dev/1715813062120-2024-05-15T22:44:22.120Z/triggerjobid-service.zip"
+          "S3Bucket": "tag-dl-sandbox-code",
+          "S3Key": "serverless/bizaway-jobid-propagation/dev/1715941503699-2024-05-17T10:25:03.699Z/bizaway-jobid-propagation.zip"
         },
         "Handler": "main.main",
         "Runtime": "python3.11",
-        "FunctionName": "triggerjobid-service-dev-triggerjobid",
+        "FunctionName": "bizaway-jobid-propagation-dev-BizawayJobIdPropagation",
         "MemorySize": 1024,
         "Timeout": 6,
         "Environment": {
           "Variables": {
-            "DATA_BUCKET": "tag-dl-sandbox-data"
+            "DATA_BUCKET": "tag-dl-sandbox-data",
+            "SECRET_NAME": "dev/BizawayToken"
           }
         },
         "Role": {
@@ -189,24 +128,24 @@
         }
       },
       "DependsOn": [
-        "TriggerjobidLogGroup"
+        "BizawayJobIdPropagationLogGroup"
       ]
     },
-    "TriggerjobidLambdaVersionMWANyCnelLjjU0NTJL38P01HSrRUaACyoVpMJMya8M": {
+    "BizawayJobIdPropagationLambdaVersionWMWJrYeeJ7XqbMdzqPeqROfwVoyyRz8vPEUi9fHnt84": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
-          "Ref": "TriggerjobidLambdaFunction"
+          "Ref": "BizawayJobIdPropagationLambdaFunction"
         },
-        "CodeSha256": "9XhbY4mDPKHltiayWrlSMj2gNxHQaeLf36xI1cWhc0g="
+        "CodeSha256": "CTod88Z4XjMJHxOlRPl3dH5mecrbayzBPTpCBzNZXIo="
       }
     },
-    "TriggerjobidCustomS31": {
+    "BizawayJobIdPropagationCustomS31": {
       "Type": "Custom::S3",
       "Version": 1,
       "DependsOn": [
-        "TriggerjobidLambdaFunction",
+        "BizawayJobIdPropagationLambdaFunction",
         "CustomDashresourceDashexistingDashs3LambdaFunction"
       ],
       "Properties": {
@@ -216,7 +155,7 @@
             "Arn"
           ]
         },
-        "FunctionName": "triggerjobid-service-dev-triggerjobid",
+        "FunctionName": "bizaway-jobid-propagation-dev-BizawayJobIdPropagation",
         "BucketName": "tag-dl-sandbox-data",
         "BucketConfigs": [
           {
@@ -259,7 +198,7 @@
                 "-",
                 [
                   "dev",
-                  "triggerjobid-service",
+                  "bizaway-jobid-propagation",
                   "custom-resources-lambda"
                 ]
               ]
@@ -326,12 +265,10 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
-          "S3Bucket": {
-            "Ref": "ServerlessDeploymentBucket"
-          },
-          "S3Key": "serverless/triggerjobid-service/dev/1715813062120-2024-05-15T22:44:22.120Z/custom-resources.zip"
+          "S3Bucket": "tag-dl-sandbox-code",
+          "S3Key": "serverless/bizaway-jobid-propagation/dev/1715941503699-2024-05-17T10:25:03.699Z/custom-resources.zip"
         },
-        "FunctionName": "triggerjobid-service-dev-custom-resource-existing-s3",
+        "FunctionName": "bizaway-jobid-propagation-dev-custom-resource-existing-s3",
         "Handler": "s3/handler.handler",
         "MemorySize": 1024,
         "Runtime": "nodejs16.x",
@@ -350,20 +287,18 @@
   },
   "Outputs": {
     "ServerlessDeploymentBucketName": {
-      "Value": {
-        "Ref": "ServerlessDeploymentBucket"
-      },
+      "Value": "tag-dl-sandbox-code",
       "Export": {
-        "Name": "sls-triggerjobid-service-dev-ServerlessDeploymentBucketName"
+        "Name": "sls-bizaway-jobid-propagation-dev-ServerlessDeploymentBucketName"
       }
     },
-    "TriggerjobidLambdaFunctionQualifiedArn": {
+    "BizawayJobIdPropagationLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "TriggerjobidLambdaVersionMWANyCnelLjjU0NTJL38P01HSrRUaACyoVpMJMya8M"
+        "Ref": "BizawayJobIdPropagationLambdaVersionWMWJrYeeJ7XqbMdzqPeqROfwVoyyRz8vPEUi9fHnt84"
       },
       "Export": {
-        "Name": "sls-triggerjobid-service-dev-TriggerjobidLambdaFunctionQualifiedArn"
+        "Name": "sls-bizaway-jobid-propagation-dev-BizawayJobIdPropagationLambdaFunctionQualifiedArn"
       }
     }
   }

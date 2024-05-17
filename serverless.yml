@@ -1,12 +1,13 @@
-service: triggerjobid-service
+service: bizaway-jobid-propagation
 
 provider:
   name: aws
   runtime: python3.11
-  stage: dev
+  stage: ${opt:stage}
   region: eu-west-1
   environment:
-    DATA_BUCKET: tag-dl-sandbox-data
+    DATA_BUCKET: ${file(./${self:provider.stage}.yml):data_bucket}
+    SECRET_NAME: ${file(./${self:provider.stage}.yml):secret_name}
   iam:
     role:
       statements:
@@ -14,18 +15,32 @@ provider:
           Action:
             - "s3:GetObject"
           Resource:
-            - "arn:aws:s3:::tag-dl-sandbox-data/*"
+            - "arn:aws:s3:::${file(./${self:provider.stage}.yml):data_bucket}/intake/transition/job_id_services/TAG_JOB_ID/*"
+
+        - Effect: "Allow"
+          Action:
+            - "secretmanager:GetSecretValue"
+            - "secretsmanager:DescribeSecret"
+          Resource:
+            - ${file(./${self:provider.stage}.yml):secret_arn}
+        
+  deploymentBucket:
+    name: ${file(./${self:provider.stage}.yml):code_bucket}
+    maxPreviousDeploymentArtifacts: 5
+  logRetentionInDays: 60
 
 functions:
-  triggerjobid:
+  BizawayJobIdPropagation:
     handler: main.main
     events:
       - s3:
-          bucket: tag-dl-sandbox-data
+          bucket: ${file(./${self:provider.stage}.yml):data_bucket}
           event: s3:ObjectCreated:*
           existing: true
           rules:
             - prefix: intake/transition/job_id_services/TAG_JOB_ID/
             - suffix: .json
+
+
 
 

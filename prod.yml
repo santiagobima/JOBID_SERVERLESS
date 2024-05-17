@@ -1,0 +1,5 @@
+data_bucket: tag-dl-data
+code_bucket: tag-dl-code
+
+secret_name: prod/BizawayToken
+secret_arn: abc
